@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'styles_signup.css' %}">
+</head>
+<body>
+
+<!-- First section of the form -->
+<div class="container" id="section1">
+    <form id="signup-form" action="#" method="POST">
+        <h2>Sign Up</h2>
+        <div class="form-group">
+            <label for="first-name">First name:</label><br>
+            <input type="text" id="first-name" name="first-name" placeholder="First Name" required><br>
+            <span id="firstNameError" class="error-message"></span><br>
+        </div>
+        <div class="form-group">
+            <label for="last-name">Last name:</label><br>
+            <input type="text" id="last-name" name="last-name" placeholder="Last Name" required><br>
+            <span id="lastNameError" class="error-message"></span><br>
+        </div>
+        <div class="form-group">
+            <label for="gender">Gender:</label><br>
+            <select id="gender" name="gender" required><br>
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+            </select>
+            <span id="genderError" class="error-message"></span><br>
+        </div>
+        <div class="form-group">
+            <label for="phone">Phone No.:</label><br>
+            <input type="tel" id="phone" name="phone" placeholder="Phone Number" required/><br>
+            <span id="phoneError" class="error-message"></span><br>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Enter Password:</label><br>
+            <input type="password" id="password" name="password" placeholder="Password" required/><br>
+            <span id="passwordError" class="error-message"></span><br>
+        </div>
+
+        <button type="button" onclick="validateSection1()">Next</button>
+    </form>
+</div>
+
+<!-- Second section of the form -->
+<div id="section2" style="display:none;" class="container">
+    <form id="other-details-form" >
+        <h2>Additional Details</h2>
+        <div class="form-group">
+            <label for="dob">Date of Birth:</label><br>
+            <input type="date" id="dob" name="dob" required><br>
+            <span id="dobError" class="error-message"></span><br>
+        </div>
+<!--        <span id="dobError" class="error-message"></span><br>-->
+        <div class="form-group">
+            <label for="blood-group">Blood Group:</label><br>
+            <select id="blood-group" name="blood-group" required><br>
+                <option value="">Select Blood Group</option>
+                <option value="A+">A+</option>
+                <option value="A-">A-</option>
+                <option value="B+">B+</option>
+                <option value="B-">B-</option>
+                <option value="O+">O+</option>
+                <option value="O-">O-</option>
+                <option value="AB+">AB+</option>
+                <option value="AB-">AB-</option>
+            </select>
+            <span id="bloodGroupError" class="error-message"></span><br>
+        </div>
+        <div class="form-group">
+            <label for="address">Address:</label><br>
+            <textarea id="address" name="address" rows="3" required></textarea><br>
+            <span id="addressError" class="error-message"></span><br>
+        </div>
+<!--        <label for="address">Address:</label><br>-->
+<!--        <input type="text" id="address" name="address" required><br>-->
+<!--        <span id="addressError" class="error-message"></span><br>-->
+
+<!--        <label for="bloodGroup">Blood Group:</label><br>-->
+<!--        <input type="text" id="bloodGroup" name="bloodGroup" required><br>-->
+<!--        <span id="bloodGroupError" class="error-message"></span><br>-->
+
+        <button type="button" onclick="validateSection2()">Submit</button>
+    </form>
+    <p id="responseMessage" style="color: red; margin-top: 10px;"> </p>
+    <p>If you are already registered: <a href="/login">Login</a></p>
+</div>
+
+<script>
+function validateSection1() {
+    var firstName = document.getElementById("first-name");
+    var lastName = document.getElementById("last-name");
+    var gender = document.getElementById("gender");
+    var phone = document.getElementById("phone");
+    var password = document.getElementById("password");
+
+    var firstNameError = document.getElementById("firstNameError");
+    var lastNameError = document.getElementById("lastNameError");
+    var genderError = document.getElementById("genderError");
+    var phoneError = document.getElementById("phoneError");
+    var passwordError = document.getElementById("passwordError");
+
+    firstNameError.textContent = firstName.validity.valueMissing ? "Please fill this field" : "";
+    lastNameError.textContent = lastName.validity.valueMissing ? "Please fill this field" : "";
+    genderError.textContent = gender.validity.valueMissing ? "Please fill this field" : "";
+    phoneError.textContent = phone.validity.valueMissing ? "Please fill this field" : "";
+    passwordError.textContent = password.validity.valueMissing ? "Please fill this field" : "";
+
+    if (firstName.validity.valid && lastName.validity.valid && gender.validity.valid && phone.validity.valid && password.validity.valid) {
+        document.getElementById("section1").style.display = "none";
+        document.getElementById("section2").style.display = "block";
+    }
+}
+
+function validateSection2() {
+    var dob = document.getElementById("dob");
+    var address = document.getElementById("address");
+    var bloodGroup = document.getElementById("blood-group");
+
+    var dobError = document.getElementById("dobError");
+    var addressError = document.getElementById("addressError");
+    var bloodGroupError = document.getElementById("bloodGroupError");
+
+    dobError.textContent = dob.validity.valueMissing ? "Please fill this field" : "";
+    addressError.textContent = address.validity.valueMissing ? "Please fill this field" : "";
+    bloodGroupError.textContent = bloodGroup.validity.valueMissing ? "Please fill this field" : "";
+
+    if (dob.validity.valid && address.validity.valid && bloodGroup.validity.valid) {
+        sendData();
+    }
+}
+
+function sendData() {
+    var data = {
+        firstName: document.getElementById("first-name").value,
+        lastName: document.getElementById("last-name").value,
+        gender: document.getElementById("gender").value,
+        phone: document.getElementById("phone").value,
+        password: document.getElementById("password").value,
+        dob: document.getElementById("dob").value,
+        address: document.getElementById("address").value,
+        bloodGroup: document.getElementById("blood-group").value
+    };
+
+    // Assuming using fetch API to make the POST request
+    fetch('/api/signup/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(responseData => {
+            // Handle successful response from the server
+            console.log(responseData);
+            let role = responseData['Login_id'];
+            document.getElementById("responseMessage").innerText = "Registration successful. Your new ID is: " + role;
+            console.log(role)
+            })
+    .catch(error => {
+        console.error('There was an error!', error);
+    });
+}
+</script>
+</body>
+</html>

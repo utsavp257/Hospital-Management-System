@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Doctor Page</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'styles_final.css' %}">
+  </head>
+  <body>
+    <h1>Welcome, Doctor! {{ name }}</h1>
+    <button onclick="toggleFormVisibility('appointmentRange')" style="margin-right: 10px;" >
+      View Appointments
+    </button>
+    <button onclick="toggleFormVisibility('patientid')" style="margin-right: 10px;">
+      View Patient History
+    </button>
+    <button onclick="toggleFormVisibility('prescribeMed')" style="margin-right: 10px;">
+      Prescribe Medicine
+    </button>
+    <button onclick="toggleFormVisibility('prescribeTreat')" style="margin-right: 10px;">
+      Prescribe Treatments
+    </button>
+    <button onclick="toggleFormVisibility('prescribeTest')" style="margin-right: 10px;">
+      Prescribe Tests
+    </button>
+    <button onclick="toggleFormVisibility('editFormdiv2')" style="margin-right: 10px;">Edit Profile</button>
+
+    <button onclick="toggleFormVisibility('closeAppoint')" style="float: right;">
+    Close Appointment
+    </button>
+
+    <div id="editFormdiv2" style="display: none">
+      <!-- Edit profile form -->
+      <form id="editForm2">
+        First Name: <input type="text" id="firstName" /><br />
+        Last Name: <input type="text" id="lastName" /><br />
+        Gender: <input type="text" id="gender" /><br />
+        Address: <input type="text" id="address" /><br />
+        Phone Number: <input type="text" id="phoneNumber" /><br />
+        <!--			add user table details as well, for example password and phone number-->
+        <button type="button" onclick="updateProfile()">Update Profile</button>
+      </form>
+    </div>
+
+    <div id="closeAppoint" style="display: none">
+      <!-- Appointment form -->
+      <form id="closeForm">
+        Appointment ID: <input type="text" id="appointmentID4" /><br />
+
+        <button type="button" onclick="closeAppoint()">Submit</button>
+      </form>
+    </div>
+
+    <div id="appointmentRange" style="display: none">
+      <!-- Appointment Range form -->
+      <form id="appointmentRangeForm">
+        From: <input type="date" id="fromDate" /> to:
+        <input type="date" id="toDate" /><br />
+
+        <button type="button" onclick="submitAppointmentRange()">Submit</button>
+      </form>
+    </div>
+
+    <div id="patientid" style="display: none">
+      <!-- Appointment Range form -->
+      <form id="patientidForm">
+        Patient ID: <input type="text" id="patientid2" />
+
+
+        <button type="button" onclick="submitPatientID()">Submit</button>
+      </form>
+    </div>
+
+    <div id="prescribeMed" style="display: none">
+      <!-- Appointment form -->
+      <form id="presMedForm">
+        Appointment ID: <input type="text" id="appointmentID" /><br />
+        Disease: <input type="text" id="disease" /><br />
+        Prescription: <input type="text" id="pres" /><br />
+        <button type="button" onclick="submitMedicine()">Submit</button>
+      </form>
+    </div>
+    <div id="prescribeTreat" style="display: none">
+      <!-- Appointment form -->
+      <form id="presTreatForm">
+        End Date: <input type="date" id="enddate" /><br />
+        Treatment: <input type="text" id="treatment" /><br />
+        Disease: <input type="text" id="disease2" /><br />
+        Appointment ID: <input type="text" id="appointmentID2" /><br />
+        <button type="button" onclick="submitTreatment()">Submit</button>
+      </form>
+    </div>
+
+    <div id="prescribeTest" style="display: none">
+      <!-- Appointment form -->
+      <form id="presTreatForm">
+        Test Name: <input type="text" id="testname" /><br />
+        Appointment ID: <input type="text" id="appointmentID3" /><br />
+        <button type="button" onclick="submitTest()">Submit</button>
+      </form>
+    </div>
+
+    <div id="appointmentDetails"></div>
+    <div id="patientDetails"></div>
+
+    <script>
+      function updateProfile() {
+        // Get form data
+        const doctor_id = '{{ name }}';
+        const firstName = document.getElementById("firstName").value;
+        const lastName = document.getElementById("lastName").value;
+        const gender = document.getElementById("gender").value;
+        const address = document.getElementById("address").value;
+        const phoneNumber = document.getElementById("phoneNumber").value;
+
+        // Prepare data object
+        const profileData = {
+          doctor_id: doctor_id,
+          first_name: firstName,
+          last_name: lastName,
+          gender: gender,
+          address: address,
+          phoneNumber: phoneNumber,
+        };
+
+        // Send data to backend using fetch API
+        fetch("/api/editdoctorprofile/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(profileData),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // Handle response
+            console.log("Response:", data);
+            if (data.status === "success") {
+              alert("Profile updated successfully");
+              // Optionally, clear the form fields
+              document.getElementById("editForm").reset();
+            } else {
+              alert("Failed to update profile: " + data.message);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+<!--            alert("An error occurred while updating profile");-->
+          });
+      }
+
+      function closeAppoint() {
+        // Get form data
+        console.log("closing");
+        const appointmentID = document.getElementById("appointmentID4").value;
+
+        // Prepare data object
+        const prescriptionData = {
+          appointment_id: appointmentID,
+        };
+
+        // Send data to backend using fetch API
+        fetch("/api/close1/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(prescriptionData),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // Handle response
+
+            if (data.status === "success") {
+              alert("appointment ended successfully");
+              // Optionally, clear the form fields
+              document.getElementById("closeForm").reset();
+            } else {
+              alert("Failed to end appointment: " + data.message);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("An error occurred while ending appointment");
+          });
+      }
+
+      function toggleFormVisibility(formId) {
+        var form = document.getElementById(formId);
+        if (form.style.display === "none") {
+          form.style.display = "block";
+        } else {
+          form.style.display = "none";
+        }
+      }
+      function submitAppointmentRange() {
+        // Get form data
+        console.log("entering");
+        console.log("submitAppointmentRange function executed");
+        const from = document.getElementById("fromDate").value;
+        const to = document.getElementById("toDate").value;
+        const doctor_id = "{{ name }}";
+
+        if (from != null && to != null && from != "" && to != "") {
+          // Make an AJAX request to fetch doctor details
+          fetch(
+            "http://127.0.0.1:8000/api/doctor1/?from_date=" +
+              from +
+              "&to_date=" +
+              to +
+              "&doctor_id=" +
+              doctor_id,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          )
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json();
+            })
+            .then((data) => {
+              // Display doctor details
+              displayAppointmentDetails(data);
+            })
+            .catch((error) => {
+              // Display an error message
+              alert("Failed to fetch appointment. Please try again.");
+              console.error("Error:", error);
+            });
+        }
+      }
+
+      function displayAppointmentDetails(data) {
+        var appDetailsDiv = document.getElementById("appointmentDetails");
+        console.log("hey1");
+        a = data.appointment_details;
+        // console.log(a);
+        //var appoint = JSON.parse(data).appointment_details;
+        // Clear previous data
+        appDetailsDiv.innerHTML = "";
+
+        // Check if the data contains doctor details
+        console.log("hey");
+
+        // Display each app details
+        a.forEach(function (appointmentfun) {
+          var appointmentInfo = document.createElement("p");
+          appointmentInfo.textContent =
+            "Appointment ID: " +
+            appointmentfun.appointment_id +
+            ", Appointment Date: " +
+            appointmentfun.appointment_date +
+            ", Appointment Time: " +
+            appointmentfun.appointment_time +
+            ", Symptoms: " +
+            appointmentfun.symptoms;
+          appDetailsDiv.appendChild(appointmentInfo);
+        });
+        var clearButton = document.createElement("button");
+        clearButton.textContent = "Clear";
+        clearButton.addEventListener("click", function () {
+          // Clear the contents of the appointmentDetails div
+          appDetailsDiv.innerHTML = "";
+        });
+        appDetailsDiv.appendChild(clearButton);
+      }
+
+      function submitMedicine() {
+        // Get form data
+        console.log("entering");
+        console.log("submitting meds");
+        const appointmentID = document.getElementById("appointmentID").value;
+        const disease = document.getElementById("disease").value;
+        const prescription = document.getElementById("pres").value;
+        const doctor_id = "{{ name }}";
+
+        // Prepare data object
+        const prescriptionData = {
+          appointment_id: appointmentID,
+          d_name: disease,
+          doctor_id: doctor_id,
+          prescription: prescription,
+        };
+        console.log("ghusa mera lawda");
+        // Send data to backend using fetch API
+        fetch("/api/prescription1/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(prescriptionData),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // Handle response
+            console.log("Response:", data);
+            if (data.status === "success") {
+              alert("Prescription created successfully");
+              // Optionally, clear the form fields
+              document.getElementById("presMedForm").reset();
+            } else {
+              alert("Failed to create prescription: " + data.message);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("An error occurred while creating appointment");
+          });
+      }
+
+      function submitTreatment() {
+        // Get form data
+        console.log("entering");
+        console.log("submitting treats");
+        const enddate = document.getElementById("enddate").value;
+        const treatment = document.getElementById("treatment").value;
+        const disease = document.getElementById("disease2").value;
+        const appointmentID = document.getElementById("appointmentID2").value;
+        const doctor_id = "{{ name }}";
+
+        // Prepare data object
+        const prescriptionData = {
+          end_date: enddate,
+          d_name: disease,
+          treat_name: treatment,
+          doctor_id: doctor_id,
+          appointment_id: appointmentID,
+        };
+        console.log("ghusa mera lawda");
+        // Send data to backend using fetch API
+        fetch("/api/prescription2/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(prescriptionData),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // Handle response
+            console.log("Response:", data);
+            if (data.status === "success") {
+              alert("Treatment started successfully");
+              // Optionally, clear the form fields
+              document.getElementById("presMedForm").reset();
+            } else {
+              alert("Failed to create treatment: " + data.message);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("An error occurred while creating treatment");
+          });
+      }
+
+      function submitTest() {
+        // Get form data
+        console.log("entering");
+        console.log("submitting tests");
+
+        const test = document.getElementById("testname").value;
+        const appointmentID = document.getElementById("appointmentID3").value;
+        const doctor_id = "{{ name }}";
+
+        // Prepare data object
+        const prescriptionData = {
+          test_name: test,
+          appointment_id: appointmentID,
+          doctor_id: doctor_id,
+        };
+
+        // Send data to backend using fetch API
+        fetch("/api/prescription3/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(prescriptionData),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            // Handle response
+            console.log("Response:", data);
+            if (data.status === "success") {
+              alert("Treatment started successfully");
+              // Optionally, clear the form fields
+              document.getElementById("presMedForm").reset();
+            } else {
+              alert("Failed to create treatment: " + data.message);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("An error occurred while creating treatment");
+          });
+      }
+
+      function submitPatientID() {
+        // Get form data
+        console.log("entering");
+        console.log("submitAppointmentRange function executed");
+        const patient_id = document.getElementById("patientid2").value;
+
+
+
+        if (patient_id != null) {
+          // Make an AJAX request to fetch doctor details
+          fetch(
+            "http://127.0.0.1:8000/api/doctor2/?patient_id=" +
+              patient_id,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
+          )
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json();
+            })
+            .then((data) => {
+              // Display doctor details
+              displayPatient2Details(data);
+            })
+            .catch((error) => {
+              // Display an error message
+              alert("Failed to fetch appointment. Please try again.");
+              console.error("Error:", error);
+            });
+        }
+      }
+
+      function displayPatientDetails(data) {
+        var appDetailsDiv = document.getElementById("patientDetails");
+        console.log("hey2");
+        a = data.patient_details;
+        // console.log(a);
+        //var appoint = JSON.parse(data).appointment_details;
+        // Clear previous data
+        appDetailsDiv.innerHTML = "";
+
+        // Check if the data contains doctor details
+        console.log("hey");
+
+        // Display each app details
+        a.forEach(function (appointmentfun) {
+          var appointmentInfo = document.createElement("p");
+          appointmentInfo.textContent =
+            "Symptoms: " +
+            appointmentfun.symptoms +
+            ", Disease: " +
+            appointmentfun.disease +
+            ", Prescription: " +
+            appointmentfun.prescription +
+            ", Treatment: " +
+            appointmentfun.treatment +
+            ", Lab Test:" +
+            appointmentfun.labtest;
+          appDetailsDiv.appendChild(appointmentInfo);
+        });
+        var clearButton = document.createElement("button");
+        clearButton.textContent = "Clear";
+        clearButton.addEventListener("click", function () {
+          // Clear the contents of the appointmentDetails div
+          appDetailsDiv.innerHTML = "";
+        });
+        appDetailsDiv.appendChild(clearButton);
+      }
+
+
+function displayPatient2Details(data) {
+    var recordDiv = document.getElementById("patientDetails");
+    var app_details = data.appointment_details;
+    var doctor_name = data.doctor_name;
+    var treatment_name = data.treatment;
+    var test_name = data.test;
+    var disease = data.disease;
+    var prescription = data.prescription;
+    // Clear previous data
+    recordDiv.innerHTML = "";
+    var recordInfoUp = document.createElement("p");
+    recordInfoUp.textContent = "Past Appointments";
+    recordDiv.appendChild(recordInfoUp);
+    // Display each treatment
+
+    for(var i = 0; i < app_details.length; i++){
+        var recordInfo = document.createElement("div");
+        recordInfo.classList.add("record");
+
+        var recordInfoId = document.createElement("p");
+        recordInfoId.textContent = "Appointment id: " + app_details[i].appointment_id;
+        recordInfoId.classList.add("appointment-id");
+        recordInfo.appendChild(recordInfoId);
+
+        var recordInfoDate = document.createElement("p");
+        recordInfoDate.textContent = "Appointment date: " + app_details[i].appointment_date;
+        recordInfoDate.classList.add("appointment-detail");
+        recordInfo.appendChild(recordInfoDate);
+
+        var recordInfoTime = document.createElement("p");
+        recordInfoTime.textContent = "Appointment time: " + app_details[i].appointment_time;
+        recordInfoTime.classList.add("appointment-detail");
+        recordInfo.appendChild(recordInfoTime);
+
+        var recordInfoSymptoms = document.createElement("p");
+        recordInfoSymptoms.textContent = "symptoms: " + app_details[i].symptoms;
+        recordInfoSymptoms.classList.add("appointment-detail");
+        recordInfo.appendChild(recordInfoSymptoms);
+
+        var recordInfoStatus = document.createElement("p");
+        recordInfoStatus.textContent = "status: " + app_details[i].appointment_status;
+        recordInfoStatus.classList.add("appointment-detail");
+        recordInfo.appendChild(recordInfoStatus);
+
+        var recordInfoDoctor = document.createElement("p");
+        recordInfoDoctor.textContent = "Doctor name: " + doctor_name[i];
+        recordInfoDoctor.classList.add("appointment-detail");
+        recordInfo.appendChild(recordInfoDoctor);
+
+        var recordInfoPrescription = document.createElement("p");
+        recordInfoPrescription.textContent = "Prescription: " + prescription[i];
+        recordInfoPrescription.classList.add("appointment-detail");
+        recordInfo.appendChild(recordInfoPrescription);
+
+        var recordInfoDisease = document.createElement("p");
+        recordInfoDisease.textContent = "Disease: " + disease[i];
+        recordInfoDisease.classList.add("appointment-detail");
+        recordInfo.appendChild(recordInfoDisease);
+
+        var recordInfoTreat = document.createElement("p");
+        recordInfoTreat.textContent = "Treatment: " + treatment_name[i];
+        recordInfoTreat.classList.add("appointment-detail");
+        recordInfo.appendChild(recordInfoTreat);
+
+        var recordInfoTest = document.createElement("p");
+        recordInfoTest.textContent = "Test to be done : " + test_name[i];
+        recordInfoTest.classList.add("appointment-detail");
+        recordInfo.appendChild(recordInfoTest);
+
+        recordDiv.appendChild(recordInfo);
+    }
+    var clearButton = document.createElement("button");
+    clearButton.textContent = "Clear";
+    clearButton.addEventListener("click", function() {
+    // Clear the contents of the appointmentDetails div
+    recordDiv.innerHTML = "";
+     });
+     recordDiv.appendChild(clearButton);
+}
+
+
+    </script>
+  </body>
+</html>

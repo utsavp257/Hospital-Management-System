@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Page</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'styles_final.css' %}">
+    <!-- <link rel="stylesheet" type="text/css" href="styles.css"> -->
+</head>
+<body>
+    <h1>Welcome, Admin!</h1>
+    <button onclick="toggleFormVisibility('addUserForm')">Add User</button>
+    <button onclick="toggleFormVisibility('updateUserForm')">Update User</button>
+    <button onclick="toggleFormVisibility('deleteUserForm')">Delete User</button>
+    <button onclick="toggleFormVisibility('editProfileForm')">Edit Profile</button>
+    <button onclick="toggleFormVisibility('viewAppointmentsForm')">View Appointments</button>
+    <!-- Form for adding user -->
+    <div id="addUserForm" style="display: none;">
+        <form id="addUserForm">
+            <!-- User ID: <input type="text" id="userId"><br> -->
+            Password: <input type="password" id="password"><br>
+            First Name: <input type="text" id="firstName"><br>
+            Last Name: <input type="text" id="lastName"><br>
+            Gender: <input type="text" id="gender"><br>
+            Phone No: <input type="text" id="phoneNo"><br>
+            Role: <select id="role">
+                <option value="doctor">Doctor</option>
+                <option value="staff">Staff</option>
+                <option value="receptionist">Receptionist</option>
+                <option value="patient">Patient</option>
+            </select><br>
+            <button id="addUser">Add User</button>
+        </form>
+    </div>
+
+    <!-- Form for updating user -->
+    <div id="updateUserForm" style="display: none;">
+        <form id="updateUserForm">
+            User ID: <input type="text" id="userId_update"><br>
+            Password: <input type="password" id="password_update"><br>
+            First Name: <input type="text" id="firstName_update"><br>
+            Last Name: <input type="text" id="lastName_update"><br>
+            Gender: <input type="text" id="gender_update"><br>
+            Phone No: <input type="text" id="phoneNo_update"><br>
+            Role: <select id="role_update">
+                <option value="doctor">Doctor</option>
+                <option value="staff">Staff</option>
+                <option value="receptionist">Receptionist</option>
+                <option value="patient">Patient</option>
+            </select><br>
+            <button id="updateUser">Update User</button>
+        </form>
+    </div>
+
+    <!-- Form for deleting user -->
+    <div id="deleteUserForm" style="display: none;">
+        <form id="deleteUserForm">
+            User ID: <input type="text" id="userId_delete"><br>
+            Role: <select id="role_delete">
+                <option value="doctor">Doctor</option>
+                <option value="staff">Staff</option>
+                <option value="receptionist">Receptionist</option>
+                <option value="patient">Patient</option>
+            </select><br>
+            <button id="deleteUser">Delete User</button>
+        </form>
+    </div>
+
+    <div id="editProfileForm" style="display: none;">
+        <!-- Edit Profile form -->
+        <form id="editProfileForm">
+<!--            Staff ID  : <input type="text" id="staffId"><br>-->
+            Password :  <input type="text" id="adminpass"><br>
+            First Name: <input type="text" id="firstName_up"><br>
+            Last Name: <input type="text" id="lastName_up"><br>
+            Gender: <input type="text" id="gender_up"><br>
+            Address: <input type="text" id="address_up"><br>
+            Phone No: <input type="text" id="phoneNo_up"><br>
+            <button id="updateProfile">Update Profile</button>
+        </form>
+    </div>
+
+    <div id="viewAppointmentsForm" style="display: none;">
+    <form id="viewAppointmentsBetweenDatesForm">
+        Start Date: <input type="date" id="startDate"><br>
+        End Date: <input type="date" id="endDate"><br>
+        <button id="viewAppointmentsBetweenDates">View Appointments</button>
+    </form>
+    <div id="appointmentsList"></div> <!-- Container to display fetched appointments -->
+</div>
+
+
+    <script>
+        function toggleFormVisibility(formId) {
+            var form = document.getElementById(formId);
+            if (form.style.display === "none") {
+                form.style.display = "block";
+            } else {
+                form.style.display = "none";
+            }
+        }
+        document.getElementById("viewAppointmentsBetweenDates").addEventListener("click", function(event) {
+    event.preventDefault(); // Prevent default form submission
+    viewAppointmentsBetweenDates(); // Call function to view appointments between dates
+});
+function viewAppointmentsBetweenDates() {
+    // Get form data
+    var startDate = document.getElementById("startDate").value;
+    var endDate = document.getElementById("endDate").value;
+
+    // Make sure start date is before end date
+    if(startDate && endDate && startDate <= endDate) {
+        // Make AJAX request to fetch appointments between dates
+        fetch('/api/admin5/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ startDate: startDate, endDate: endDate }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Handle response
+            console.log('Response:', data);
+            if (data.status === 'success') {
+                displayAppointments(data.appointments); // Call function to display appointments
+            } else {
+                alert('Failed to fetch appointments: ' + data.message);
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+<!--            alert('An error occurred while fetching appointments');-->
+        });
+    } else {
+        alert("Please select valid dates.");
+    }
+}
+
+function displayAppointments(appointments) {
+    var appointmentsList = document.getElementById("appointmentsList");
+    appointmentsList.innerHTML = ""; // Clear previous appointments
+
+    // Loop through fetched appointments and display them
+    for (var i = 0; i < appointments.length; i++) {
+        var appointment = appointments[i];
+        var appointmentInfo = document.createElement("div");
+        appointmentInfo.innerHTML = "Appointment ID: " + appointment.appointmentid + "<br>" +
+                                    "Appointment Date: " + appointment.appointmentdate + "<br>" +
+                                    "Appointment Time: " + appointment.appointmenttime + "<br>" +
+                                    "Doctor ID: " + appointment.doctorid + "<br>" +
+                                    "Patient ID: " + appointment.patientid + "<br>" +
+                                    "Symptoms: " + appointment.symptoms + "<br>" +
+                                    "Appointment Status: " + appointment.appointmentstatus + "<br><br>";
+        appointmentsList.appendChild(appointmentInfo);
+    }
+    var clearButton = document.createElement("button");
+        clearButton.textContent = "Clear";
+        clearButton.addEventListener("click", function () {
+          // Clear the contents of the appointmentDetails div
+          appointmentsList.innerHTML = "";
+        });
+        appointmentsList.appendChild(clearButton);
+}
+
+
+        function addUser() {
+            // Get form data
+           // const userId = document.getElementById("userId").value;
+            const password = document.getElementById("password").value;
+            const firstName = document.getElementById("firstName").value;
+            const lastName = document.getElementById("lastName").value;
+            const gender = document.getElementById("gender").value;
+            const phoneNo = document.getElementById("phoneNo").value;
+            const role = document.getElementById("role").value;
+
+
+            // Prepare data object
+            const userData = {
+              //  user_id: userId,
+                u_password: password,
+                first_name: firstName,
+                last_name: lastName,
+                gender: gender,
+                phone_no: phoneNo,
+                role: role
+            };
+
+
+            // Send data to backend using fetch API
+            fetch('/api/admin1/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    alert('User added successfully');
+                    // Optionally, clear the form fields
+                    document.getElementById("addUserForm").reset();
+                } else {
+                    alert('Failed to add user: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+<!--                alert('An error occurred while adding user');-->
+            });
+        }
+
+
+        function updateUser() {
+            // Get form data
+            const userId = document.getElementById("userId_update").value;
+            const password = document.getElementById("password_update").value;
+            const firstName = document.getElementById("firstName_update").value;
+            const lastName = document.getElementById("lastName_update").value;
+            const gender = document.getElementById("gender_update").value;
+            const phoneNo = document.getElementById("phoneNo_update").value;
+            const role = document.getElementById("role_update").value;
+
+
+            // Prepare data object
+            const userData = {
+                user_id: userId,
+                u_password: password,
+                first_name: firstName,
+                last_name: lastName,
+                gender: gender,
+                phone_no: phoneNo,
+                role: role
+            };
+
+
+            // Send data to backend using fetch API
+            fetch('/api/admin2/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(userData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    alert('User updated successfully');
+                    // Optionally, clear the form fields
+                    document.getElementById("updateUserForm").reset();
+                } else {
+                    alert('Failed to update user: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+<!--                alert('An error occurred while updating user');-->
+            });
+        }
+
+
+        function deleteUser() {
+    // Get form data
+    const userId = document.getElementById("userId_delete").value;
+    const role = document.getElementById("role_delete").value;
+
+    // Prepare data object
+    const userData = {
+        user_id: userId,
+        role: role
+    };
+
+    // Send data to backend using fetch API
+    fetch('/api/admin3/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userData),
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Handle response
+        console.log('Response:', data);
+        if (data.status === 'success') {
+            alert('User deleted successfully');
+            // Optionally, clear the form fields
+            document.getElementById("deleteUserForm").reset();
+        } else {
+            alert('Failed to delete user: ' + data.message);
+        }
+    })
+    .catch((error) => {
+        console.error('Error:', error);
+<!--        alert('An error occurred while deleting user');-->
+    });
+}
+
+function updateProfile() {
+            // Get form data
+            const adminId   = '{{ name }}';
+            const adminpass = document.getElementById("adminpass").value;
+            const firstName = document.getElementById("firstName_up").value;
+            const lastName = document.getElementById("lastName_up").value;
+            const gender = document.getElementById("gender_up").value;
+            const address = document.getElementById("address_up").value;
+            const phoneNo = document.getElementById("phoneNo_up").value;
+
+
+            // Prepare data object
+            const profileData = {
+                admin_id: adminId,
+                admin_pass:adminpass,
+                first_name: firstName,
+                last_name: lastName,
+                gender: gender,
+                address:address,
+                phone_no: phoneNo
+            };
+
+
+            // Send data to backend using fetch API
+            fetch('/api/admin4/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(profileData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    alert('Profile updated successfully');
+                    // Optionally, clear the form fields
+                    document.getElementById("editProfileForm").reset();
+                } else {
+                    alert('Failed to update profile: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('An error occurred while updating profile');
+            });
+        }
+
+
+        document.getElementById("updateProfile").addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            updateProfile(); // Call function to update profile
+        });
+
+
+        document.getElementById("addUser").addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            addUser(); // Call function to add user
+        });
+
+
+        document.getElementById("updateUser").addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            updateUser(); // Callfunction to update user
+        });
+
+
+        document.getElementById("deleteUser").addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            deleteUser(); // Call function to delete user
+        });
+    </script>
+</body>
+</html>

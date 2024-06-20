@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Patient Page</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'styles_final.css' %}">
+    <style>
+        /* Style for the output container */
+        #output {
+            border: 2px solid #007bff; /* Blue border */
+            padding: 20px;
+            background-color: #f0f0f0; /* Light gray background */
+            width: 300px; /* Adjust the width as needed */
+        }
+        /* Style for each record */
+        .record {
+            margin-bottom: 10px;
+        }
+        /* Style for appointment id */
+        .appointment-id {
+            font-weight: bold;
+        }
+        /* Style for appointment date and time */
+        .appointment-detail {
+            margin-left: 20px;
+        }
+    </style>
+    <style>
+        /* CSS styles */
+        /* Center the container */
+        #billContainer {
+            position: relative; /* Change position to relative */
+            text-align: center;
+        }
+
+        /* Style for the "Download PDF" button */
+        #downloadButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #2596be;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px; /* Adjust margin as needed */
+        }
+
+        #downloadButton:hover {
+            background-color: #245464;
+        }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.0.272/jspdf.debug.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.js"></script>
+
+</head>
+<body>
+<!--    <header>-->
+<!--		<nav>-->
+<!--			<ul>-->
+<!--				<li><a href="#">About Us</a></li>-->
+<!--				<li><a href="#">Contact Us</a></li>-->
+<!--				<li><button class="login-button"><a href="/login">Login</a> </button></li>-->
+<!--				<li><button id="signup-button"><a href="/signup">signup</a></button></li>-->
+<!--			</ul>-->
+<!--		</nav>-->
+<!--	</header>-->
+	<h1>Welcome, Patient! {{ name }}</h1>
+	<button onclick="toggleFormVisibility('appointmentRange')">
+      View Past Records
+    </button>
+    <button onclick="toggleFormVisibility('appointmentRange1')">
+      View Upcoming Appointments
+    </button>
+    <button onclick="viewAppointmentRequests()">View My Appointment Requests</button>
+	<button onclick="toggleFormVisibility('requestFormdiv')">Request Appointment</button>
+	<button onclick="toggleFormVisibility('editFormdiv')">Edit Profile</button>
+	<button type="button" onclick="generateBill()">Generate Bill</button>
+
+	<div id="bills"></div>
+    <div id="recordDiv"></div>
+    <div id="recordDiv1"></div>
+    <div id="appointmentRequests"></div>
+    <div id="printableBill"></div>
+
+    <div id="billContainer" style="display: none;">
+        <div id="billContent"></div>
+        <!-- "Download PDF" button below the bill content -->
+        <button id="downloadButton" onclick="downloadBill()">Download PDF</button>
+    </div>
+
+    <div id="appointmentRange" style="display: none">
+      <!-- Appointment Range form -->
+      <form id="appointmentRangeForm">
+        From: <input type="date" id="fromDate" /> to:
+        <input type="date" id="toDate" /><br />
+
+        <button type="button" onclick="submitAppointmentRange()">Submit</button>
+      </form>
+    </div>
+
+    <div id="appointmentRange1" style="display: none">
+      <!-- Appointment Range form -->
+      <form id="appointmentRangeForm1">
+        From: <input type="date" id="fromDate1" /> to:
+        <input type="date" id="toDate1" /><br />
+
+        <button type="button" onclick="submitAppointmentRange1()">Submit</button>
+      </form>
+    </div>
+
+
+	<div id="editFormdiv" style="display: none;">
+        <!-- Edit profile form -->
+        <form id="editForm">
+            First Name: <input type="text" id="firstName"><br>
+            Last Name: <input type="text" id="lastName"><br>
+            Gender: <input type="text" id="gender"><br>
+            Weight: <input type="text" id="weight"><br>
+            Address: <input type="text" id="address"><br>
+            Phone Number: <input type="text" id="phoneNumber"><br>
+<!--			add user table details as well, for example password and phone number-->
+            <button type="button" onclick="updateProfile()">Update Profile</button>
+        </form>
+    </div>
+
+	<div id="requestFormdiv" style="display: none;">
+        <!-- Edit profile form -->
+        <form id="requestForm">
+            Symptoms: <input type="text" id="symptoms"><br>
+<!--			add user table details as well, for example password and phone number-->
+            <button type="button" onclick="sendRequest()">Send Request</button>
+        </form>
+    </div>
+	<script >
+
+		function toggleFormVisibility(formId) {
+            var form = document.getElementById(formId);
+            if (form.style.display === "none") {
+                form.style.display = "block";
+            } else {
+                form.style.display = "none";
+            }
+        }
+//Utsav starts
+
+ function viewAppointmentRequests() {
+            // Make an AJAX request to fetch appointment requests
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        // Success: Display the fetched appointment requests
+                        displayAppointmentRequests(xhr.responseText);
+                    } else {
+                        // Error: Display an error message
+                        alert("Failed to fetch appointment requests. Please try again.");
+                    }
+                }
+            };
+            xhr.open("GET", "http://127.0.0.1:8000/api/viewmyreq/?patient_id=" + '{{ name }}', true); // API endpoint URL
+            xhr.send();
+        }
+
+        function displayAppointmentRequests(response) {
+            var appointmentRequestsDiv = document.getElementById("appointmentRequests");
+            var appointments = JSON.parse(response).appointments;
+            console.log(appointments)
+            // Clear previous data
+            appointmentRequestsDiv.innerHTML = ".";
+
+            // Display each appointment
+            appointments.forEach(function(appointment) {
+                var appointmentInfo = document.createElement("p");
+                appointmentInfo.textContent = "Appointment ID: " + appointment.serial_id +
+                                              ", Patient ID: " + appointment.patient_id +
+                                              ", symptoms: " + appointment.symptoms +
+                                              ", Date: " + appointment.t_stamp;
+                appointmentRequestsDiv.appendChild(appointmentInfo);
+            });
+            var clearButton = document.createElement("button");
+            clearButton.textContent = "Clear";
+            clearButton.addEventListener("click", function() {
+            // Clear the contents of the appointmentDetails div
+            appointmentRequestsDiv.innerHTML = "";
+             });
+             appointmentRequestsDiv.appendChild(clearButton);
+        }
+
+
+
+		function updateProfile() {
+            // Get form data
+            const patient_id = '{{ name }}';
+            const firstName = document.getElementById("firstName").value;
+            const lastName = document.getElementById("lastName").value;
+            const gender = document.getElementById("gender").value;
+            const weight = document.getElementById("weight").value;
+            const address = document.getElementById("address").value;
+            const phoneNumber = document.getElementById("phoneNumber").value;
+            // Prepare data object
+            const profileData = {
+                p_id: patient_id,
+                first_name: firstName,
+                last_name: lastName,
+                gender: gender,
+                weight: weight,
+                address: address,
+                phoneNumber: phoneNumber
+            };
+
+            // Send data to backend using fetch API
+            fetch('/api/editpatientprofile/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(profileData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    alert('Profile updated successfully');
+                    // Optionally, clear the form fields
+                    document.getElementById("editForm").reset();
+                } else {
+                    alert('Failed to update profile: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('An error occurred while updating profile');
+            });
+        }
+		function sendRequest() {
+            // Get form data
+            const patient_id = '{{ name }}';
+            const symptoms = document.getElementById("symptoms").value;
+
+            // Prepare data object
+            const profileData = {
+                p_id: patient_id,
+                symptoms: symptoms,
+            };
+
+            // Send data to backend using fetch API
+            fetch('/api/reqappointment/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(profileData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    alert('Profile updated successfully');
+                    // Optionally, clear the form fields
+                    document.getElementById("requestForm").reset();
+                } else {
+                    alert('Failed to update profile: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('An error occurred while updating profile');
+            });
+        }
+//Utsav ends
+
+		function generateBill() {
+            // Get form data
+            const patient_id = '{{ name }}';
+
+            // Prepare data object
+            const profileData = {
+                p_id: patient_id,
+            };
+
+            // Send data to backend using fetch API
+            fetch('/api/patientBill/?p_id=' + patient_id, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+                console.log('Response:', data);
+                if (data.status === 200) {
+                    displayBill(data);
+<!--                    const printableBillHTML = generatePrintableBillHTML(data);-->
+
+<!--            // Display printable bill HTML-->
+<!--            document.getElementById('printableBill').innerHTML = printableBillHTML;-->
+
+<!--            // Show download PDF button-->
+<!--            document.getElementById('downloadButton').style.display = 'block';-->
+                }  else {
+                    alert('Failed to update profile: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('An error occurred while generating bill');
+            });
+        }
+        function displayBill(data) {
+            var billDiv = document.getElementById("bills");
+            var treatment = data.treatment;
+            var test = data.test;
+            var totalTreat = data.totalTreatmentCost;
+            var totalTest = data.totalTestCost;
+            var totalMed = data.totalMedicineCost;
+
+            // Clear previous data
+            billDiv.innerHTML = "";
+
+            // Display each treatment
+            treatment.forEach(function(treat) {
+                var billInfo = document.createElement("p");
+                billInfo.textContent = "Treatment name: " + treat.treatment_name +
+                                              ", cost: " + treat.cost;
+                billDiv.appendChild(billInfo);
+            });
+            var billInfo = document.createElement("p");
+            billInfo.textContent = "Total cost of treatment: " + totalTreat ;
+            billDiv.appendChild(billInfo);
+            // Display each test
+            test.forEach(function(tests) {
+                var billInfo = document.createElement("p");
+                billInfo.textContent = "Test name: " + tests.test_name +
+                                              ", cost: " + tests.cost;
+                billDiv.appendChild(billInfo);
+            });
+            var billInfo = document.createElement("p");
+            billInfo.textContent = "Total cost of test: " + totalTest ;
+            billDiv.appendChild(billInfo);
+            var billInfo = document.createElement("p");
+            billInfo.textContent = "Total cost of medicines: " + totalMed ;
+            billDiv.appendChild(billInfo);
+            var clearButton = document.createElement("button");
+            clearButton.textContent = "Clear";
+            clearButton.addEventListener("click", function() {
+            // Clear the contents of the appointmentDetails div
+            billDiv.innerHTML = "";
+             });
+             billDiv.appendChild(clearButton);
+             document.getElementById("billContainer").style.display = "block";
+        }
+
+        function downloadBill() {
+        // Generate the PDF
+        var doc = new jsPDF();
+        doc.text("Bill Details", 10, 10);
+        // Add bill details to the PDF
+        var billContents = document.getElementById("bills").innerText;
+        doc.text(billContents, 10, 20);
+        // Save the PDF
+        doc.save("bill.pdf");
+<!--            const printableBill = document.getElementById('printableBill').innerHTML;-->
+<!--    const filename = 'bill.pdf';-->
+
+<!--    // Create a new jsPDF instance-->
+<!--    const doc = new jsPDF();-->
+
+<!--    // Set font size and style for the PDF-->
+<!--    doc.setFontSize(12);-->
+
+<!--    // Add HTML content to the PDF-->
+<!--    doc.html(printableBill, {-->
+<!--        callback: function (doc) {-->
+<!--            // Save the PDF-->
+<!--            doc.save(bill.pdf);-->
+<!--        }-->
+<!--    });-->
+    }
+
+        function submitAppointmentRange() {
+
+        // Get form data
+        console.log("entering");
+        console.log("submitAppointmentRange function executed");
+        const p_id = '{{ name }}';
+        const from = document.getElementById("fromDate").value;
+        const to = document.getElementById("toDate").value;
+
+        if (from != null && to != null && from != "" && to != "") {
+          // Make an AJAX request to fetch doctor details
+          fetch(
+            "http://127.0.0.1:8000/api/patient1/?from_date=" +
+              from +
+              "&to_date=" +
+              to +
+              "&patient_id=" +
+              p_id,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+
+            }
+          )
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json();
+            })
+            .then((data) => {
+                 console.log(data);
+              // Display doctor details
+              if(data.status==='success'){
+              displayAppointmentDetails(data);}
+              else{
+              alert("Error:"+data.message)}
+            })
+            .catch((error) => {
+              // Display an error message
+              alert("Failed to fetch appointment. Please try again.");
+              console.error("Error:", error);
+            });
+        }
+        function displayAppointmentDetails(data) {
+            var recordDiv = document.getElementById("recordDiv");
+            var app_details = data.appointment_details;
+            var doctor_name = data.doctor_name;
+            var treatment_name = data.treatment;
+            var test_name = data.test;
+            var disease = data.disease;
+            var prescription = data.prescription;
+            // Clear previous data
+            recordDiv.innerHTML = "";
+            var recordInfoUp = document.createElement("p");
+            recordInfoUp.textContent = "Past Appointments";
+            recordDiv.appendChild(recordInfoUp);
+            // Display each treatment
+
+            for(var i = 0; i < app_details.length; i++){
+                var recordInfo = document.createElement("div");
+                recordInfo.classList.add("record");
+
+                var recordInfoId = document.createElement("p");
+                recordInfoId.textContent = "Appointment id: " + app_details[i].appointment_id;
+                recordInfoId.classList.add("appointment-id");
+                recordInfo.appendChild(recordInfoId);
+
+                var recordInfoDate = document.createElement("p");
+                recordInfoDate.textContent = "Appointment date: " + app_details[i].appointment_date;
+                recordInfoDate.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoDate);
+
+                var recordInfoTime = document.createElement("p");
+                recordInfoTime.textContent = "Appointment time: " + app_details[i].appointment_time;
+                recordInfoTime.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoTime);
+
+                var recordInfoSymptoms = document.createElement("p");
+                recordInfoSymptoms.textContent = "symptoms: " + app_details[i].symptoms;
+                recordInfoSymptoms.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoSymptoms);
+
+                var recordInfoStatus = document.createElement("p");
+                recordInfoStatus.textContent = "status: " + app_details[i].appointment_status;
+                recordInfoStatus.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoStatus);
+
+                var recordInfoDoctor = document.createElement("p");
+                recordInfoDoctor.textContent = "Doctor name: " + doctor_name[i];
+                recordInfoDoctor.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoDoctor);
+
+                var recordInfoPrescription = document.createElement("p");
+                recordInfoPrescription.textContent = "Prescription: " + prescription[i];
+                recordInfoPrescription.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoPrescription);
+
+                var recordInfoDisease = document.createElement("p");
+                recordInfoDisease.textContent = "Disease: " + disease[i];
+                recordInfoDisease.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoDisease);
+
+                var recordInfoTreat = document.createElement("p");
+                recordInfoTreat.textContent = "Treatment: " + treatment_name[i];
+                recordInfoTreat.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoTreat);
+
+                var recordInfoTest = document.createElement("p");
+                recordInfoTest.textContent = "Test to be done : " + test_name[i];
+                recordInfoTest.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoTest);
+
+                recordDiv.appendChild(recordInfo);
+            }
+            var clearButton = document.createElement("button");
+            clearButton.textContent = "Clear";
+            clearButton.addEventListener("click", function() {
+            // Clear the contents of the appointmentDetails div
+            recordDiv.innerHTML = "";
+             });
+             recordDiv.appendChild(clearButton);
+        }
+      }
+      function submitAppointmentRange1() {
+
+        // Get form data
+        console.log("entering");
+        console.log("submitAppointmentRange function executed");
+        const p_id = '{{ name }}';
+        const from = document.getElementById("fromDate1").value;
+        const to = document.getElementById("toDate1").value;
+
+        if (from != null && to != null && from != "" && to != "") {
+          // Make an AJAX request to fetch doctor details
+          fetch(
+            "http://127.0.0.1:8000/api/patient2/?from_date=" +
+              from +
+              "&to_date=" +
+              to +
+              "&patient_id=" +
+              p_id,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+              },
+
+            }
+          )
+            .then((response) => {
+              if (!response.ok) {
+                throw new Error("Network response was not ok");
+              }
+              return response.json();
+            })
+            .then((data) => {
+                 console.log(data);
+              // Display doctor details
+              if(data.status==='success'){
+              displayAppointmentDetails1(data);}
+              else{
+              alert("Error: "+data.message)}
+            })
+            .catch((error) => {
+              // Display an error message
+              alert("Failed to fetch appointment. Please try again.");
+              console.error("Error:", error);
+            });
+        }
+        function displayAppointmentDetails1(data) {
+            var recordDiv = document.getElementById("recordDiv1");
+            var app_details = data.appointment_details;
+            var doctor_name = data.doctor_name;
+
+            // Clear previous data
+            recordDiv.innerHTML = "";
+            var recordInfoUp = document.createElement("p");
+            recordInfoUp.textContent = "Upcoming Appointments";
+            recordDiv.appendChild(recordInfoUp);
+            // Display each treatment
+
+            for(var i = 0; i < app_details.length; i++){
+                var recordInfo = document.createElement("div");
+                recordInfo.classList.add("record");
+
+                var recordInfoId = document.createElement("p");
+                recordInfoId.textContent = "Appointment id: " + app_details[i].appointment_id;
+                recordInfoId.classList.add("appointment-id");
+                recordInfo.appendChild(recordInfoId);
+
+                var recordInfoDate = document.createElement("p");
+                recordInfoDate.textContent = "Appointment date: " + app_details[i].appointment_date;
+                recordInfoDate.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoDate);
+
+                var recordInfoTime = document.createElement("p");
+                recordInfoTime.textContent = "Appointment time: " + app_details[i].appointment_time;
+                recordInfoTime.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoTime);
+
+                var recordInfoSymptoms = document.createElement("p");
+                recordInfoSymptoms.textContent = "symptoms: " + app_details[i].symptoms;
+                recordInfoSymptoms.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoSymptoms);
+
+                var recordInfoStatus = document.createElement("p");
+                recordInfoStatus.textContent = "status: " + app_details[i].appointment_status;
+                recordInfoStatus.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoStatus);
+
+                var recordInfoDoctor = document.createElement("p");
+                recordInfoDoctor.textContent = "Doctor name: " + doctor_name[i];
+                recordInfoDoctor.classList.add("appointment-detail");
+                recordInfo.appendChild(recordInfoDoctor);
+
+                recordDiv.appendChild(recordInfo);
+            }
+            var clearButton = document.createElement("button");
+            clearButton.textContent = "Clear";
+            clearButton.addEventListener("click", function() {
+            // Clear the contents of the appointmentDetails div
+            recordDiv.innerHTML = "";
+             });
+             recordDiv.appendChild(clearButton);
+        }
+      }
+<!--      function generatePrintableBillHTML(data) {-->
+<!--    let billHTML = '<h2>Bill Details</h2>';-->
+
+<!--    billHTML += '<h3>Treatment Details:</h3>';-->
+<!--    data.treatment.forEach((treat) => {-->
+<!--        billHTML += <p>Treatment: ${treat.treatment_name}, Cost: ${treat.cost}</p>;-->
+<!--    });-->
+
+<!--    billHTML += '<h3>Test Details:</h3>';-->
+<!--    data.test.forEach((test) => {-->
+<!--        billHTML += <p>Test: ${test.test_name}, Cost: ${test.cost}</p>;-->
+<!--    });-->
+
+<!--    billHTML += <p>Total Treatment Cost: ${data.totalTreatmentCost}</p>;-->
+<!--    billHTML += <p>Total Test Cost: ${data.totalTestCost}</p>;-->
+<!--    billHTML += <p>Total Medicine Cost: ${data.totalMedicineCost}</p>;-->
+
+<!--    return billHTML;-->
+<!--}-->
+	</script>
+</body>
+</html>

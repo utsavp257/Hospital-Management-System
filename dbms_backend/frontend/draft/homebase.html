@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <style>
+    *{
+      padding:0px;
+      margin:0px;
+    }
+    body{
+      position: relative;
+      min-height: 100vh;
+    }
+    #footer{
+      position: absolute;
+      height: 202px;
+      bottom:0;
+      width: 100%;  
+      /* margin: 0px; */
+    }
+    .cont{
+      padding-bottom: 140px;
+      height: 6000px;
+      background-color: gray;
+    }
+  </style>
+  <meta charset="utf-8">
+  <title>LazyCoder || sumit</title>
+</head>
+<body>
+  <div id="navbar"></div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(function(){
+      $("#navbar").load("navbar.html");
+    });
+  </script>
+  <div class="cont">
+
+  </div>
+
+  <!-- Navbar content loaded here -->
+  <div id="footer"></div>
+
+  <script>
+    $(function(){
+      $("#footer").load("footer.html");
+    });
+  </script>
+  <!-- Footer content loaded here -->
+</body>
+</html>

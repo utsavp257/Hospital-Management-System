@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Staff Page</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'styles_final.css' %}">
+    <!-- <link rel="stylesheet" type="text/css" href="styles.css"> -->
+</head>
+<body>
+    <h1>Welcome, Staff Member!</h1>
+    <button onclick="viewPrescriptions()">View Prescriptions</button>
+    <button onclick="toggleFormVisibility('sellMedicineForm')">Sell Medicine</button>
+    <button onclick="toggleFormVisibility('restockMedicineForm')">Restock Medicine</button>
+    <button onclick="toggleFormVisibility('editProfileForm')">Edit Profile</button>
+
+
+    <!-- Form for viewing prescriptions -->
+    <div id="viewPrescriptionForm" style="display: none;">
+        <form id="viewPrescriptionForm">
+            Patient ID: <input type="text" id="patientId"><br>
+            <button type="button" onclick="viewPrescriptionByPatientId()">View Prescription</button>
+        </form>
+    </div>
+
+
+    <div id="sellMedicineForm" style="display: none;">
+        <!-- Sell Medicine form -->
+        <form id="sellMedicineForm">
+            Medicine Name: <input type="text" id="medicineName"><br>
+            Quantity: <input type="number" id="quantity"><br>
+            <!-- Sale Price: <input type="number" id="salePrice"><br> -->
+            Customer ID: <input type="text" id="customerName"><br>
+            <button id="sellMedicine">Sell</button>
+        </form>
+    </div>
+
+
+    <div id="restockMedicineForm" style="display: none;">
+        <!-- Restock Medicine form -->
+        <form id="restockMedicineForm">
+            Medicine Name: <input type="text" id="medicineName_restock"><br>
+            Quantity: <input type="number" id="quantity_restock"><br>
+            Cost Price: <input type="number" id="costPrice"><br>
+			<button type="button" onclick="restockMedicine()">Restock</button>
+            <!-- <button id="restockMedicine">Restock</button> -->
+        </form>
+    </div>
+
+
+    <div id="editProfileForm" style="display: none;">
+        <!-- Edit Profile form -->
+        <form id="editProfileForm">
+<!--            Staff ID  : <input type="text" id="staffId"><br>-->
+            First Name: <input type="text" id="firstName"><br>
+            Last Name: <input type="text" id="lastName"><br>
+            Gender: <input type="text" id="gender"><br>
+            Phone No: <input type="text" id="phoneNo"><br>
+            <button id="updateProfile">Update Profile</button>
+        </form>
+    </div>
+
+
+    <!-- Placeholder for displaying prescriptions -->
+    <div id="prescriptions"></div>
+
+
+    <script>
+        function toggleFormVisibility(formId) {
+            var form = document.getElementById(formId);
+            if (form.style.display === "none") {
+                form.style.display = "block";
+            } else {
+                form.style.display = "none";
+            }
+        }
+
+
+        function viewPrescriptions() {
+            toggleFormVisibility('viewPrescriptionForm');
+        }
+
+
+        function viewPrescriptionByPatientId() {
+            var patientId = document.getElementById("patientId").value;
+            console.log(patientId);
+            if (patientId !== null && patientId !== "") {
+            fetch('http://127.0.0.1:8000/api/staff4/?patient_id='+patientId, {
+                method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+
+            .then(data => {
+                console.log('Response:', data);
+                console.log(data.status);
+                if (data.status === 'success') {
+                  displayPrescriptions(data.prescriptions);
+                 }
+                 else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+<!--                alert('An error occurred while fetching prescriptions');-->
+            });
+        }
+        }
+
+
+        function displayPrescriptions(prescriptions) {
+    var prescriptionsDiv = document.getElementById("prescriptions");
+    prescriptionsDiv.innerHTML = ""; // Clear previous data
+
+    prescriptions.forEach(function(prescription) {
+        var prescriptionInfo = document.createElement("p");
+        var prescriptionText = "Patient ID: " + prescription.patient_id +
+                               ", Appointment ID: " + prescription.appointment_id;
+
+        // Check if prescription is an array before calling join()
+        if (Array.isArray(prescription.prescription)) {
+            prescriptionText += ", Prescription: " + prescription.prescription.join(", ");
+        } else {
+            prescriptionText += ", Prescription: " + prescription.prescription;
+        }
+
+        prescriptionInfo.textContent = prescriptionText;
+        prescriptionsDiv.appendChild(prescriptionInfo);
+
+    });
+    var clearButton = document.createElement("button");
+            clearButton.textContent = "Clear";
+            clearButton.addEventListener("click", function() {
+            // Clear the contents of the appointmentDetails div
+            prescriptionsDiv.innerHTML = "";
+             });
+        prescriptionsDiv.appendChild(clearButton);
+}
+
+
+
+        function sellMedicine() {
+            // Get form data
+            const medicineName = document.getElementById("medicineName").value;
+            const quantity = document.getElementById("quantity").value;
+           // const salePrice = document.getElementById("salePrice").value;
+            const customerName = document.getElementById("customerName").value;
+
+
+            // Prepare data object
+            const sellData = {
+                medicine_name: medicineName,
+                quantity: quantity,
+            //    sale_price: salePrice,
+                customer_name: customerName
+            };
+
+
+            // Send data to backend using fetch API
+            fetch('/api/staff1/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(sellData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    alert('Medicine sold successfully');
+                    // Optionally, clear the form fields
+                    document.getElementById("sellMedicineForm").reset();
+                } else {
+                    alert('Failed to sell medicine: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+<!--                alert('An error occurred while selling medicine');-->
+            });
+        }
+
+
+        document.getElementById("sellMedicine").addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            sellMedicine(); // Call function to sell medicine
+        });
+
+
+        function restockMedicine() {
+			const medicineName = document.getElementById("medicineName_restock").value;
+            const quantity = document.getElementById("quantity_restock").value;
+            const costPrice = document.getElementById("costPrice").value;
+
+
+
+            // Prepare data object
+            const reData = {
+                medicine_name: medicineName,
+                quantity: quantity,
+                cost_price: costPrice
+
+            };
+
+
+            // Send data to backend using fetch API
+            fetch('/api/staff2/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(reData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    alert('Medicine restocked successfully');
+                    // Optionally, clear the form fields
+                    document.getElementById("restockMedicineForm").reset();
+                } else {
+                    alert('Failed to stock medicine: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+<!--                alert('An error occurred while stocking medicine');-->
+            });
+        }
+
+
+        // document.getElementById("restockMedicine").addEventListener("click", function(event) {
+        //     event.preventDefault(); // Prevent default form submission
+        //     restockMedicine(); // Call function to sell medicine
+        //     // Get form data
+        // //     const medicineName = document.getElementById("medicineName").value;
+        // //     const quantity = document.getElementById("quantity").value;
+        // //     const costPrice = document.getElementById("costPrice").value;
+
+
+        // //     // Prepare data object
+        // //     const restockData = {
+        // //         medicine_name: medicineName,
+        // //         quantity: quantity,
+        // //         cost_price: costPrice
+        // //     };
+
+
+        // //     // Send data to backend using fetch API
+        // //     fetch('/api/staff2/', {
+        // //         method: 'POST',
+        // //         headers: {
+        // //             'Content-Type': 'application/json',
+        // //         },
+        // //         body: JSON.stringify(restockData),
+        // //     })
+        // //     .then(response => response.json())
+        // //     .then(data => {
+        // //         // Handle response
+        // //         console.log('Response:', data);
+        // //         if (data.status === 'success') {
+        // //             alert('Medicine restocked successfully');
+        // //             // Optionally, clear the form fields
+        // //             document.getElementById("restockMedicineForm").reset();
+        // //         } else {
+        // //             alert('Failed to restock medicine: ' + data.message);
+        // //         }
+        // //     })
+        // //     .catch((error) => {
+        // //         console.error('Error:', error);
+        // //         alert('An error occurred while restocking medicine');
+        // //     });
+        // // }
+
+
+        // // document.getElementById("restockMedicine").addEventListener("click", function(event) {
+        // //     event.preventDefault(); // Prevent default form submission
+        // //     restockMedicine(); // Call function to restock medicine
+        // });
+
+
+        function updateProfile() {
+            // Get form data
+            const staffId   = '{{ name }}';
+            const firstName = document.getElementById("firstName").value;
+            const lastName = document.getElementById("lastName").value;
+            const gender = document.getElementById("gender").value;
+            const phoneNo = document.getElementById("phoneNo").value;
+
+
+            // Prepare data object
+            const profileData = {
+                staff_id: staffId,
+                first_name: firstName,
+                last_name: lastName,
+                gender: gender,
+                phone_no: phoneNo
+            };
+
+
+            // Send data to backend using fetch API
+            fetch('/api/staff3/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(profileData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    alert('Profile updated successfully');
+                    // Optionally, clear the form fields
+                    document.getElementById("editProfileForm").reset();
+                } else {
+                    alert('Failed to update profile: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+<!--                alert('An error occurred while updating profile');-->
+            });
+        }
+
+
+        document.getElementById("updateProfile").addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            updateProfile(); // Call function to update profile
+        });
+
+    </script>
+</body>
+</html>

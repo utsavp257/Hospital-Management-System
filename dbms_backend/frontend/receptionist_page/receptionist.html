@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Receptionist Page</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'styles_final.css' %}">
+<!--    <link rel="stylesheet" type="text/css" href="styles.css">-->
+</head>
+<body>
+    <h1>Welcome, Receptionist!</h1>
+    <button onclick="viewAppointmentRequests()">View Appointment Requests</button>
+    <button onclick="viewDoctorDetails()">View Doctor Details</button>
+    <button onclick="toggleFormVisibility('appointmentFormdiv')">Make Appointment</button>
+    <button onclick="toggleFormVisibility('wardFormdiv')">Assign Ward</button>
+    <button onclick="toggleFormVisibility('editFormdiv')">Edit Profile</button>
+
+    <div id="appointmentFormdiv" style="display: none;">
+        <!-- Appointment form -->
+        <form id="appointmentForm">
+<!--            Appointment ID: <input type="text" id="appointmentID"><br>-->
+            Appointment Date: <input type="date" id="appointmentDate"><br>
+            Appointment Time: <input type="time" id="appointmentTime"><br>
+            Doctor ID: <input type="text" id="doctorID"><br>
+            Patient ID: <input type="text" id="patientID1"><br>
+            Symptoms: <textarea id="symptoms"></textarea><br>
+<!--            Appointment Status: <input type="text" id="appointmentStatus"><br>-->
+            <button type="button" onclick="submitAppointment()">Submit</button>
+        </form>
+    </div>
+
+    <div id="wardFormdiv" style="display: none;">
+        <!-- Ward form -->
+        <form id="wardForm">
+            Patient ID: <input type="text" id="patientID"><br>
+            Ward ID: <input type="text" id="wardID"><br>
+<!--            Number of Available Beds: <input type="number" id="availableBeds"><br>-->
+            <button type="button" onclick="assignWard()">Assign Ward</button>
+        </form>
+    </div>
+
+    <div id="editFormdiv" style="display: none;">
+        <!-- Edit profile form -->
+        <form id="editForm">
+<!--            Rec_id: <input type="text" id="rec_id"><br>-->
+            First Name: <input type="text" id="firstName"><br>
+            Last Name: <input type="text" id="lastName"><br>
+            Gender: <input type="text" id="gender"><br>
+            Address: <input type="text" id="address"><br>
+            Nationality: <input type="text" id="nationality"><br>
+            Qualification: <input type="text" id="qualification"><br>
+            Phone Number: <input type="text" id="phoneNumber"><br>
+            <button type="button" onclick="updateProfile()">Update Profile</button>
+        </form>
+    </div>
+
+
+    <!-- Add a placeholder for displaying appointment requests -->
+    <div id="appointmentRequests"></div>
+    <div id="doctorDetails"></div>
+    <!-- JavaScript for handling button clicks and AJAX request -->
+    <script>
+        function toggleFormVisibility(formId) {
+            var form = document.getElementById(formId);
+            if (form.style.display === "none") {
+                form.style.display = "block";
+            } else {
+                form.style.display = "none";
+            }
+        }
+        function viewAppointmentRequests() {
+            // Make an AJAX request to fetch appointment requests
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        // Success: Display the fetched appointment requests
+                        displayAppointmentRequests(xhr.responseText);
+                    } else {
+                        // Error: Display an error message
+                        alert("Failed to fetch appointment requests. Please try again.");
+                    }
+                }
+            };
+            xhr.open("GET", "http://127.0.0.1:8000/api/reception/", true); // API endpoint URL
+            xhr.send();
+        }
+
+        function displayAppointmentRequests(response) {
+            var appointmentRequestsDiv = document.getElementById("appointmentRequests");
+            var appointments = JSON.parse(response).appointments;
+
+            // Clear previous data
+            appointmentRequestsDiv.innerHTML = "";
+
+            // Display each appointment
+            appointments.forEach(function(appointment) {
+                var appointmentInfo = document.createElement("p");
+                appointmentInfo.textContent = "Appointment ID: " + appointment.serial_id +
+                                              ", Patient ID: " + appointment.patient_id +
+                                              ", symptoms: " + appointment.symptoms +
+                                              ", Date: " + appointment.t_stamp;
+                appointmentRequestsDiv.appendChild(appointmentInfo);
+            });
+            var clearButton = document.createElement("button");
+            clearButton.textContent = "Clear";
+            clearButton.addEventListener("click", function() {
+            // Clear the contents of the appointmentDetails div
+            appointmentRequestsDiv.innerHTML = "";
+             });
+             appointmentRequestsDiv.appendChild(clearButton);
+        }
+        //new doctor deets
+
+        function viewDoctorDetails() {
+    var doctorSpec = prompt("Enter Doctor Specialization:");
+    if (doctorSpec !== null && doctorSpec !== "") {
+        // Make an AJAX request to fetch doctor details
+        fetch('http://127.0.0.1:8000/api/reception4/?doctor_spec=' + doctorSpec, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            // Pass the doctor ID as a query parameter
+            // Here, doctor_id is the name of the query parameter expected by the backend
+            // Adjust it if the backend expects a different parameter name
+            // For example: '/reception4/?doctor_id=' + doctorId
+            // Ensure to handle this query parameter in the backend view function
+            // The backend view function should accept the doctor_id parameter
+            // and use it to fetch the corresponding doctor details
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Display doctor details
+            displayDoctorDetails(data);
+        })
+        .catch(error => {
+            // Display an error message
+            alert("Failed to fetch doctor details. Please try again.");
+            console.error('Error:', error);
+        });
+        }
+        }
+        function displayDoctorDetails(data) {
+        var doctorDetailsDiv = document.getElementById("doctorDetails");
+        var doctorDetails = data.doctor_details;
+        //var doctorDetails = response
+        // Clear previous data
+        console.log(doctorDetails)
+        doctorDetailsDiv.innerHTML = "";
+
+        doctorDetails.forEach(function(doctorDetail) {
+            var doctorInfo = document.createElement("p");
+            doctorInfo.textContent = "Doctor ID: " + doctorDetail.doctor_id +
+                                          ", First Name: " + doctorDetail.fname +
+                                          ", Last Name: " + doctorDetail.lname +
+                                          ", Gender: " + doctorDetail.gender +
+                                          ", Qualification: " + doctorDetail.qualification +
+                                          ", dtype: " + doctorDetail.dtype+
+                                          ", Phone Number: " + doctorDetail.phone_no;
+            doctorDetailsDiv.appendChild(doctorInfo);
+            });
+            var clearButton = document.createElement("button");
+            clearButton.textContent = "Clear";
+            clearButton.addEventListener("click", function() {
+            // Clear the contents of the appointmentDetails div
+            doctorDetailsDiv.innerHTML = "";
+             });
+             doctorDetailsDiv.appendChild(clearButton);
+        }
+
+
+
+
+
+
+        // Add event listener to the button to toggle form visibility
+<!--        document.getElementById("showAppointmentFormButton").addEventListener("click", function() {-->
+<!--            document.getElementById("appointmentForm").style.display = "block";-->
+<!--        });-->
+
+        // Add event listener to submit button
+<!--        document.addEventListener("DOMContentLoaded", function() {-->
+<!--            console.log("DOMContentLoaded event fired");-->
+<!--            document.getElementById("submitAppointment").addEventListener("click", function(event) {-->
+<!--                event.preventDefault(); // Prevent default form submission-->
+<!--                console.log("tester");-->
+<!--                submitAppointment(); // Call function to submit appointment-->
+<!--            });-->
+<!--        });-->
+
+        function submitAppointment() {
+            // Get form data
+            console.log("entering")
+            console.log("submitAppointment function executed");
+<!--            const appointmentID = document.getElementById("appointmentID").value;-->
+            const appointmentDate = document.getElementById("appointmentDate").value;
+            const appointmentTime = document.getElementById("appointmentTime").value;
+            const doctorID = document.getElementById("doctorID").value;
+            const patientID = document.getElementById("patientID1").value;
+            const symptoms = document.getElementById("symptoms").value;
+<!--            const appointmentStatus = document.getElementById("appointmentStatus").value;-->
+
+            // Prepare data object
+            const appointmentData = {
+<!--                appointment_id: appointmentID,-->
+                appointment_date: appointmentDate,
+                appointment_time: appointmentTime,
+                doctor_id: doctorID,
+                patient_id: patientID,
+                symptoms: symptoms,
+<!--                appointment_status: appointmentStatus-->
+            };
+            console.log(patientID)
+            // Send data to backend using fetch API
+            fetch('/api/reception1/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(appointmentData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    alert('Appointment created successfully');
+                    // Optionally, clear the form fields
+                    document.getElementById("appointmentForm").reset();
+                } else {
+                    alert('Failed to create appointment: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('An error occurred while creating appointment');
+            });
+        }
+
+
+        function assignWard() {
+            // Get form data
+            const patientID = document.getElementById("patientID").value;
+            const wardID = document.getElementById("wardID").value;
+            //const availableBeds = document.getElementById("availableBeds").value;
+
+            // Prepare data object
+            const wardData = {
+                patient_id: patientID,
+                ward_id: wardID,
+                //no_of_available: availableBeds
+            };
+
+            // Send data to backend using fetch API
+            fetch('/api/assignward/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(wardData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    alert('Ward assigned successfully');
+                    // Optionally, clear the form fields
+                    document.getElementById("wardForm").reset();
+                } else {
+                    alert('Failed to assign ward: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error aaya!', error);
+            });
+        }
+/*
+        // Add event listener to the button to toggle form visibility
+        document.getElementById("showWardFormButton").addEventListener("click", function() {
+            document.getElementById("wardForm").style.display = "block";
+        });
+
+        // Add event listener to submit button
+        document.getElementById("assignWard").addEventListener("click", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            assignWard(); // Call function to assign ward
+        });
+*/
+        function updateProfile() {
+            // Get form data
+            const rec_id = '{{ name }}';
+            const firstName = document.getElementById("firstName").value;
+            const lastName = document.getElementById("lastName").value;
+            const gender = document.getElementById("gender").value;
+            const address = document.getElementById("address").value;
+            const nationality = document.getElementById("nationality").value;
+            const qualification = document.getElementById("qualification").value;
+            const phoneNumber = document.getElementById("phoneNumber").value;
+
+            // Prepare data object
+            const profileData = {
+                rec_id: rec_id,
+                first_name: firstName,
+                last_name: lastName,
+                gender: gender,
+                address: address,
+                nationality: nationality,
+                qualification: qualification,
+                phoneNumber: phoneNumber,
+            };
+
+            // Send data to backend using fetch API
+            fetch('/api/editrecprofile/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(profileData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle response
+                console.log('Response:', data);
+                if (data.status === 'success') {
+                    alert('Profile updated successfully');
+                    // Optionally, clear the form fields
+                    document.getElementById("editForm").reset();
+                } else {
+                    alert('Failed to update profile: ' + data.message);
+                }
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('An error occurred while updating profile');
+            });
+        }
+    </script>
+</body>
+</html>

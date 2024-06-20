@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hospital Database Management System - Login</title>
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'styles_login.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        <form id="loginForm">
+<!--            {% csrf_token %}-->
+            <label for="username">Username:</label><br>
+            <input type="text" id="username" name="username"><br>
+            <label for="password">Password:</label><br>
+            <input type="password" id="password" name="password"><br>
+            <label for="roles">Role:</label><br>
+            <select name="role" id="roles">
+                <option value="doctor">Doctor</option>
+                <option value="patient">Patient</option>
+                <option value="receptionist">Receptionist</option>
+                <option value="staff">Staff</option>
+                <option value="Admin">Admin</option>
+            </select><br>
+            <input type="submit" value="Log In">
+        </form>
+        <p>If you are not registered, <a href="/signup">Register</a></p>
+        <!-- Error message display -->
+        <div id="error-message" style="color: red; margin-top: 10px;"></div>
+    </div>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+
+        // Get form data
+        const formData = new FormData(event.target);
+
+        // Create object from form data
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = value;
+        });
+
+        // Make AJAX request
+        fetch('/api/login/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(responseData => {
+            // Handle successful response from the server
+            console.log(responseData);
+            if(responseData['status'] === 420) {
+                document.getElementById('error-message').innerText = 'Invalid username or password or role. Please try again.';
+            } else {
+                let role = responseData['role'];
+                let user_id = responseData['username'];
+                console.log(role)
+                switch (role) {
+                        case "doctor":
+                            redirectUrl = '/api/doctor/' + user_id + '/';
+                            break;
+                        case "patient":
+                            redirectUrl = '/api/patient/' + user_id + '/';
+                            break;
+                        case "receptionist":
+                            redirectUrl = '/api/reception/' + user_id + '/';
+                            break;
+                        case "staff":
+                           redirectUrl = '/api/staff/' + user_id + '/';
+                            break;
+                        case "Admin":
+                            redirectUrl = 'api/admin/' + user_id + '/';
+                            break;
+                    }
+                window.location.href = redirectUrl;
+                // Redirect to another page or show a success message
+            }
+        })
+        .catch(error => {
+            // Handle errors
+            console.error('There was a problem with the fetch operation:', error);
+            document.getElementById('error-message').innerText = 'Invalid username or password or role. Please try again.';
+        });
+    });
+    </script>
+</body>
+</html>
