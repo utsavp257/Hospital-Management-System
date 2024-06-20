@@ -1,0 +1,43 @@
+from django.contrib import admin
+from django.urls import path, include, re_path
+from . import views
+
+urlpatterns = [
+    path("/login/", views.login),
+    path("/signup/", views.signup),
+    path("/reception/", views.view_appointment_requests),
+    path("/reception1/", views.create_appointment),
+    path("/reception2/", views.assign_ward),
+    path("/reception3/", views.edit_profile),
+    path("/reception4/", views.get_doctor_details),
+    # path('/patient/', views.patient_view),
+    path("/assignward/", views.assign_ward),
+    path("/editrecprofile/", views.edit_profile),
+    re_path(r'^/patient/(?P<number>\S+)/$', views.patient_view),
+    re_path(r'^/reception/(?P<number>\S+)/$', views.reception_view),
+    re_path(r'^/staff/(?P<number>\S+)/$', views.staff_view),
+    re_path(r'^/doctor/(?P<number>\S+)/$', views.doctor_view),
+    re_path(r'^/admin/(?P<number>\S+)/$', views.admin_view),
+    path("/staff1/", views.sell_medicine),
+    path("/staff2/", views.restock_medicine),
+    path("/staff3/", views.edit_profile_staff),
+    path("/staff4/", views.view_prescriptions),
+    path("/patientBill/",views.generateBill),
+    path("/editpatientprofile/", views.edit_patient_profile),
+    path("/reqappointment/", views.reqappointment),
+    path("/doctor1/", views.appointment_range),
+    path("/prescription1/", views.prescription_update),
+    path("/prescription2/", views.treatment_update),
+    path("/prescription3/", views.test_update),
+    path("/patient1/", views.medical_records),
+    path("/patient2/", views.medical_records1),
+    path("/viewmyreq/", views.viewmyreq),
+    path("/close1/", views.close),
+    path("/editdoctorprofile/", views.edit_doctor_profile),
+    path("/doctor2/", views.patient_records),
+    path("/admin1/", views.add_user),
+    path("/admin2/", views.update_user),
+    path("/admin3/", views.delete_user),
+    path("/admin4/", views.edit_profile_admin),
+    path("/admin5/", views.view_app)
+]
