@@ -1,4 +1,4 @@
-Collaborators : Rachit Jain , Yash Mittal,  Utsav Patel , Vishnu Nair 
+Collaborators : Yash Mittal, Rachit Jain, Utsav Patel, Vishnu Nair 
 
 ## Project Report
 
